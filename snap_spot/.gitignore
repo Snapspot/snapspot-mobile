@@ -1,0 +1,63 @@
+# Misc
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IDE
+*.iml
+*.ipr
+*.iws
+.idea/
+/.vscode/
+
+# Dart/Flutter
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# Android
+/android/build/
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+google-services.json
+
+# iOS
+/ios/Pods/
+/ios/Runner/GoogleService-Info.plist
+
+# macOS
+/macos/Flutter/ephemeral/
+/macos/build/
+
+# Linux
+/linux/build/
+
+# Windows
+/windows/build/
+
+# Web
+/web/.dart_tool/
+/web/build/
+
+# Symbolication & Obfuscation
+app.*.symbols
+app.*.map.json
+
+# Firebase (optional)
+/firebase_app_id_file.json
