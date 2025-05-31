@@ -54,6 +54,10 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/snapspot_square.jpg
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto-Regular.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

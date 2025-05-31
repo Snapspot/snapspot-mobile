@@ -12,6 +12,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SnapSpot App',
+      theme: ThemeData(
+        fontFamily: 'Roboto',
+      ),
       debugShowCheckedModeBanner: false,
       home: HomePage(),
     );

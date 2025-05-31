@@ -1,37 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:snap_spot/core/themes/app_colors.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/setting_page.dart';
+import 'network_image_with_fallback.dart';
 
 class CustomDrawer extends StatelessWidget {
-  const CustomDrawer({super.key});
+  final String userName;
+  final String avatar;
+
+  const CustomDrawer({
+    super.key,
+    this.userName = "Quyền đẹp trai",
+    this.avatar = "https://tinhte.edu.vn/wp-content/uploads/2024/04/tokuda-la-ai.jpg",
+  });
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: AppColors.green,
       child: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          DrawerHeader(child: Text("Menu", style: TextStyle(fontSize: 24))),
-          ListTile(
-            leading: Icon(Icons.home),
-            title: Text("Home"),
-            onTap: () => Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => HomePage())),
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              color: Colors.white12,
+            ),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pop(context); // Đóng Drawer
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfilePage()),
+                );
+              },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ClipOval(
+                    child: NetworkImageWithFallback(
+                      imageUrl: avatar,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      "Xin chào, $userName",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          ListTile(
-            leading: Icon(Icons.person),
-            title: Text("Profile"),
-            onTap: () => Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => ProfilePage())),
+          _buildDrawerItem(
+            context,
+            icon: Icons.home,
+            title: 'Home',
+            destination: HomePage(),
           ),
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text("Settings"),
-            onTap: () => Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => SettingPage())),
+          _buildDrawerItem(
+            context,
+            icon: Icons.settings,
+            title: 'Settings',
+            destination: const SettingPage(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required Widget destination,
+      }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      hoverColor: Colors.white24,
+      onTap: () {
+        Navigator.pop(context); // Đóng Drawer
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => destination),
+        );
+      },
     );
   }
 }
