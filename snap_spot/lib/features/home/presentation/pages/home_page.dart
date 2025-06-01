@@ -4,6 +4,7 @@ import '../../../../shared/widgets/custom_drawer.dart';
 import '../../../home/domain/models/place_model.dart';
 import '../../../../shared/widgets/network_image_with_fallback.dart';
 import '../../data/places_mock.dart';
+import 'place_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -57,7 +58,6 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Nếu đang tìm kiếm thì làm mờ phần nền
           if (isSearching)
             Positioned.fill(
               child: AnimatedOpacity(
@@ -68,11 +68,10 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-          // Giao diện chính
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Banner header
+              // Banner header giữ nguyên
               Stack(
                 children: [
                   Container(
@@ -148,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
 
-              // Thanh tìm kiếm và danh sách gợi ý
+              // Search bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
@@ -167,8 +166,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        textInputAction: TextInputAction.search,
-                        keyboardType: TextInputType.text,
                         decoration: const InputDecoration(
                           hintText: 'Bạn muốn đi đâu?',
                           prefixIcon: Icon(Icons.search),
@@ -236,6 +233,7 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 8),
 
+              // GridView with Hero animation
               Expanded(
                 child: filteredPlaces.isEmpty && isSearching
                     ? const Center(child: Text('Không có địa điểm nào phù hợp'))
@@ -252,7 +250,12 @@ class _HomePageState extends State<HomePage> {
                     final place = filteredPlaces[index];
                     return GestureDetector(
                       onTap: () {
-                        // Xử lý khi nhấn vào địa điểm
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PlaceDetailPage(place: place),
+                          ),
+                        );
                       },
                       child: Container(
                         decoration: BoxDecoration(
@@ -272,10 +275,13 @@ class _HomePageState extends State<HomePage> {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                child: NetworkImageWithFallback(
-                                  imageUrl: place.imageUrl,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                                child: Hero(
+                                  tag: 'place-image-${place.id}',
+                                  child: NetworkImageWithFallback(
+                                    imageUrl: place.imageUrl,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                             ),
