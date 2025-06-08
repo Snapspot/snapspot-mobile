@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:snap_spot/core/themes/app_colors.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/profile/data/user_mock.dart';
+import '../../features/profile/domain/model/user_model.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/setting_page.dart';
 import 'network_image_with_fallback.dart';
 
 class CustomDrawer extends StatelessWidget {
-  final String userName;
-  final String avatar;
+
 
   const CustomDrawer({
     super.key,
-    this.userName = "Quyền đẹp trai",
-    this.avatar = "https://tinhte.edu.vn/wp-content/uploads/2024/04/tokuda-la-ai.jpg",
+
   });
 
   @override
   Widget build(BuildContext context) {
+    final User user = User.fromJson(mockUserJson);
+
     return Drawer(
       backgroundColor: AppColors.green,
       child: ListView(
@@ -39,7 +41,7 @@ class CustomDrawer extends StatelessWidget {
                 children: [
                   ClipOval(
                     child: NetworkImageWithFallback(
-                      imageUrl: avatar,
+                      imageUrl: user.avatarUrl,
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
@@ -48,7 +50,7 @@ class CustomDrawer extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      "Xin chào, $userName",
+                      "Xin chào, ${user.name}",
                       style: const TextStyle(
                         fontSize: 18,
                         color: Colors.white,
