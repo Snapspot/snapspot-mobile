@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Màu nền chính
   static const Color background = Color(0xFFFAFAF0); // Lightened Be/Cream
-  // static const Color background = Color(0xFFFAEBCE); // màu nền be (original)
+  // static const Color background = Color(0xFF212529); //Dark mode
 
   // Màu chủ đạo
   static const Color primary = Color(0xFF006D77); // Xanh biển đậm

@@ -1,9 +1,9 @@
-// lib/features/home/presentation/pages/home_page.dart
 import 'package:flutter/material.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../shared/widgets/custom_carousel.dart'; // Đảm bảo import đúng widget tự xây dựng
 import '../../../../shared/widgets/custom_drawer.dart';
-import '../../../home/domain/models/place_model.dart';
 import '../../../../shared/widgets/network_image_with_fallback.dart';
+import '../../../home/domain/models/place_model.dart';
 import '../../data/places_mock.dart';
 import 'place_detail_page.dart';
 
@@ -15,16 +15,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // Biến cho việc tìm kiếm
   final TextEditingController _searchController = TextEditingController();
   late final List<Place> _allPlaces;
   List<Place> _filteredPlaces = [];
   bool _isSearching = false;
+
+  // Biến dữ liệu cho carousel
+  List<Place> _carouselPlaces = [];
 
   @override
   void initState() {
     super.initState();
     _allPlaces = mockPlacesData.map((data) => Place.fromJson(data)).toList();
     _filteredPlaces = _allPlaces;
+    _carouselPlaces = _allPlaces.take(5).toList(); // Lấy 5 địa điểm đầu tiên
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -39,7 +44,7 @@ class _HomePageState extends State<HomePage> {
           final placeName = place.name.toLowerCase();
           final districtName = place.district.name.toLowerCase();
           final provinceName = place.district.province.name.toLowerCase();
-          // More robust search: check individual terms and combined terms
+          // Tìm kiếm nâng cao
           return placeName.contains(query) ||
               districtName.contains(query) ||
               provinceName.contains(query) ||
@@ -62,7 +67,7 @@ class _HomePageState extends State<HomePage> {
 
   void _clearSearch() {
     _searchController.clear();
-    FocusScope.of(context).unfocus(); // Hide keyboard
+    FocusScope.of(context).unfocus();
     setState(() {
       _filteredPlaces = _allPlaces;
       _isSearching = false;
@@ -74,10 +79,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       drawer: const CustomDrawer(),
       backgroundColor: AppColors.background,
-      body: GestureDetector( // To dismiss keyboard when tapping outside text fields
+      body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
+            // Overlay mờ khi tìm kiếm
             if (_isSearching && _searchController.text.isNotEmpty)
               Positioned.fill(
                 child: AnimatedOpacity(
@@ -85,7 +91,6 @@ class _HomePageState extends State<HomePage> {
                   opacity: 1.0,
                   child: Container(
                     color: Colors.black.withOpacity(0.5),
-                    // To dismiss search results when tapping on the overlay
                     child: GestureDetector(onTap: _clearSearch),
                   ),
                 ),
@@ -93,65 +98,27 @@ class _HomePageState extends State<HomePage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Banner header
+                // --- Carousel Banner ---
                 Stack(
                   children: [
-                    Container(
-                      height: 220,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                            'https://www.dulichhalong.net/wp-content/uploads/2014/09/Vinh-Bai-Tu-Long.jpg',
-                          ),
-                          fit: BoxFit.cover,
-                        ),
+                    if (_carouselPlaces.isNotEmpty)
+                    // SỬA LỖI: Gọi đúng tên widget CustomCarousel
+                      CustomCarousel(
+                        height: 220,
+                        itemCount: _carouselPlaces.length,
+                        itemBuilder: (context, index) {
+                          final place = _carouselPlaces[index];
+                          // Gọi hàm helper để xây dựng UI cho item
+                          return buildCarouselItem(context, place);
+                        },
                       ),
-                    ),
-                    Container(
-                      height: 220,
-                      color: Colors.black.withOpacity(0.3),
-                    ),
-                    Positioned.fill(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Vịnh Hạ Long', // Static banner title
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              shadows: [Shadow(blurRadius: 4, color: Colors.black)],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              // TODO: Implement "Xem thêm" for banner
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Chức năng "Xem thêm" cho banner chưa được triển khai.')),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: const Text('Xem thêm'),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Icon Menu
                     SafeArea(
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16, top: 8),
                         child: Builder(
-                          builder: (context) => InkWell( // Using InkWell for better feedback
-                            onTap: () {
-                              Scaffold.of(context).openDrawer();
-                            },
+                          builder: (context) => InkWell(
+                            onTap: () => Scaffold.of(context).openDrawer(),
                             customBorder: const CircleBorder(),
                             child: Container(
                               padding: const EdgeInsets.all(8),
@@ -175,11 +142,12 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
 
-                // Search bar
+                // --- Thanh tìm kiếm và kết quả ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Column(
                     children: [
+                      // Thanh tìm kiếm
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -206,12 +174,14 @@ class _HomePageState extends State<HomePage> {
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                           ),
-                          onChanged: (value) => _onSearchChanged(), // Can also use listener if preferred
                           onTap: () {
-                            setState(() { _isSearching = true; });
+                            setState(() {
+                              _isSearching = true;
+                            });
                           },
                         ),
                       ),
+                      // Danh sách kết quả tìm kiếm
                       if (_isSearching && _searchController.text.isNotEmpty && _filteredPlaces.isNotEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 8),
@@ -242,12 +212,13 @@ class _HomePageState extends State<HomePage> {
                                     MaterialPageRoute(
                                       builder: (context) => PlaceDetailPage(place: place),
                                     ),
-                                  ).then((_) => _clearSearch()); // Clear search after navigating back
+                                  ).then((_) => _clearSearch());
                                 },
                               );
                             },
                           ),
                         ),
+                      // Thông báo không tìm thấy
                       if (_isSearching && _searchController.text.isNotEmpty && _filteredPlaces.isEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 8),
@@ -269,6 +240,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
 
+                // --- Tiêu đề danh sách ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
@@ -284,20 +256,18 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 8),
 
-                // GridView with Hero animation
+                // --- Lưới hiển thị các địa điểm ---
                 Expanded(
-                  child: _filteredPlaces.isEmpty && _isSearching && _searchController.text.isNotEmpty
-                      ? const SizedBox.shrink() // Handled by the "Không tìm thấy" message above
-                      : _filteredPlaces.isEmpty && !_isSearching // Initial state, no search yet
+                  child: _filteredPlaces.isEmpty && !_isSearching
                       ? const Center(child: Text('Không có địa điểm nào để hiển thị.'))
                       : GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16), // Added bottom padding
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: _filteredPlaces.length,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 0.75, // Adjust for content
+                      childAspectRatio: 0.75,
                     ),
                     itemBuilder: (context, index) {
                       final place = _filteredPlaces[index];
@@ -308,14 +278,10 @@ class _HomePageState extends State<HomePage> {
                             MaterialPageRoute(
                               builder: (context) => PlaceDetailPage(place: place),
                             ),
-                          ).then((_) {
-                            // Optionally clear search or refresh state when returning
-                            // _clearSearch();
-                          });
+                          );
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            // Using white for cards as background is light, primary for text
                             color: AppColors.green,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
@@ -375,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 10), // More padding at bottom
+                              const SizedBox(height: 10),
                             ],
                           ),
                         ),
@@ -388,6 +354,73 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Hàm trợ giúp để xây dựng UI cho một item trong carousel.
+  Widget buildCarouselItem(BuildContext context, Place place) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        NetworkImageWithFallback(
+          imageUrl: place.imageUrl,
+          fit: BoxFit.cover,
+          width: double.infinity,
+        ),
+        Container(
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.6),
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.4),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.5, 1.0],
+              )),
+        ),
+        Positioned.fill(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  place.name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    shadows: [Shadow(blurRadius: 6, color: Colors.black)],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PlaceDetailPage(place: place),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.textPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text('Xem thêm'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
