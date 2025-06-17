@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:snap_spot/core/themes/app_colors.dart';
+import '../../features/community/presentation/pages/community_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/profile/data/user_mock.dart';
 import '../../features/profile/domain/model/user_model.dart';
@@ -66,13 +67,19 @@ class CustomDrawer extends StatelessWidget {
           _buildDrawerItem(
             context,
             icon: Icons.home,
-            title: 'Home',
+            title: 'Trang chủ',
             destination: HomePage(),
           ),
           _buildDrawerItem(
             context,
+            icon: Icons.group,
+            title: 'Cộng đồng',
+            destination: const CommunityPage(),
+          ),
+          _buildDrawerItem(
+            context,
             icon: Icons.settings,
-            title: 'Settings',
+            title: 'Cài đặt',
             destination: const SettingPage(),
           ),
         ],

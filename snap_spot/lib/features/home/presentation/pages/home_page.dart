@@ -371,9 +371,9 @@ class _HomePageState extends State<HomePage> {
           decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.6),
+                  Colors.black.withValues(blue: 0.2, green: 0.2, red: 0.2),
                   Colors.transparent,
-                  Colors.black.withOpacity(0.4),
+                  Colors.black.withValues(blue: 0.2, green: 0.2, red: 0.2),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
