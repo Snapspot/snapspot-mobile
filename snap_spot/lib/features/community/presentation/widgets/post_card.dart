@@ -4,6 +4,7 @@ import '../../../../shared/widgets/network_image_with_fallback.dart';
 import '../../../../shared/widgets/expandable_text.dart';
 import '../../../../shared/widgets/custom_carousel.dart';
 import '../../domain/models/post_model.dart';
+import 'comment_modal.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -20,6 +21,7 @@ class PostCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       shape: const RoundedRectangleBorder(),
       elevation: 2,
+      color: AppColors.background,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -28,15 +30,18 @@ class PostCard extends StatelessWidget {
             leading: CircleAvatar(
               backgroundImage: NetworkImage(post.userAvatarUrl),
             ),
-            title: Text(post.userName),
-            subtitle: Text("📍 ${post.location}"),
+            title: Text(
+              post.userName,
+              style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.green),
+            ),
+            subtitle: Text("📍 ${post.location}", style: TextStyle(color: AppColors.green)),
             trailing: const Icon(Icons.more_horiz),
           ),
 
           // Post Text
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: ExpandableText(text: post.content),
+            child: ExpandableText(text: post.content,style: TextStyle(color: AppColors.green)),
           ),
 
           // Carousel Images
@@ -46,7 +51,7 @@ class PostCard extends StatelessWidget {
               height: dynamicHeight,
               itemBuilder: (_, index) => NetworkImageWithFallback(
                 imageUrl: post.imageUrls[index],
-                fit: BoxFit.contain, // Thay vì cover để không crop ảnh
+                fit: BoxFit.contain,
                 width: double.infinity,
               ),
             ),
@@ -57,23 +62,38 @@ class PostCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
+                // Likes
                 Row(
                   children: [
-                    Icon(Icons.favorite, color: Colors.redAccent),
+                    const Icon(Icons.favorite, color: Colors.redAccent),
                     const SizedBox(width: 4),
-                    Text("${post.likes ~/ 1000}.${post.likes % 1000 ~/ 100}k",
-                        style: TextStyle(color: AppColors.textSecondary)),
+                    Text(
+                      "${post.likes ~/ 1000}.${(post.likes % 1000) ~/ 100}k",
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                   ],
                 ),
-                Row(
-                  children: [
+                // Comments
+                GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => CommentModal(comments: post.comments),
+                    );
+                  },
+                  child: Row(
+                    children: [
                       Icon(Icons.chat_bubble_outline, color: AppColors.gray),
                       const SizedBox(width: 4),
-                      Text("${post.comments}",
-                      style: TextStyle(color: AppColors.textSecondary)
+                      Text(
+                        "${post.comments.length}",
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
-                ],
-                )
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,3 +1,5 @@
+import 'comment_model.dart';
+
 class Post {
   final int id;
   final String userName;
@@ -7,7 +9,7 @@ class Post {
   final String content;
   final List<String> imageUrls;
   final int likes;
-  final int comments;
+  final List<Comment> comments;
 
   Post({
     required this.id,
@@ -31,7 +33,11 @@ class Post {
       content: json['content'],
       imageUrls: List<String>.from(json['imageUrls']),
       likes: json['likes'],
-      comments: json['comments'],
+      comments: json['commentList'] != null
+          ? List<Comment>.from(
+        json['commentList'].map((c) => Comment.fromJson(c)),
+      )
+          : [],
     );
   }
 }

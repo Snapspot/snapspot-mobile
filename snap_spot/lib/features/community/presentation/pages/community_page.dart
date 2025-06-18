@@ -15,8 +15,8 @@ class CommunityPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cộng Đồng'),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.green,
+        foregroundColor: AppColors.white,
         elevation: 0,
       ),
       drawer: const CustomDrawer(),

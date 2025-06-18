@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Màu nền chính
-  static const Color background = Color(0xFFFAFAF0); // Lightened Be/Cream
+  static const Color background = Color(0xFFFAEBCE); // Lightened Be/Cream
   // static const Color background = Color(0xFF212529); //Dark mode
 
   // Màu chủ đạo
@@ -14,6 +14,7 @@ class AppColors {
   // Màu văn bản
   static const Color textPrimary = Color(0xFF1A252F); // Darker, more saturated
   static const Color textSecondary = Color(0xFF5A6772); // Slightly desaturated grey
+
 
   // Màu trắng/đen tiêu chuẩn
   static const Color white = Colors.white;
