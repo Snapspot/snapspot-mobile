@@ -61,3 +61,6 @@ app.*.map.json
 
 # Firebase (optional)
 /firebase_app_id_file.json
+
+# Environment config
+.env

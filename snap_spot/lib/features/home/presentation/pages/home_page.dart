@@ -1,10 +1,11 @@
+// lib/features/home/presentation/pages/home_page.dart
 import 'package:flutter/material.dart';
 import '../../../../core/themes/app_colors.dart';
-import '../../../../shared/widgets/custom_carousel.dart'; // Đảm bảo import đúng widget tự xây dựng
+import '../../../../shared/widgets/custom_carousel.dart';
 import '../../../../shared/widgets/custom_drawer.dart';
 import '../../../../shared/widgets/network_image_with_fallback.dart';
-import '../../../home/domain/models/place_model.dart';
-import '../../data/places_mock.dart';
+import '../../data/spot_repository.dart';
+import '../../domain/models/spot_model.dart';
 import 'place_detail_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,46 +16,66 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Biến cho việc tìm kiếm
   final TextEditingController _searchController = TextEditingController();
-  late final List<Place> _allPlaces;
-  List<Place> _filteredPlaces = [];
+  List<SpotModel> _allSpots = [];
+  List<SpotModel> _filteredPlaces = [];
+  List<SpotModel> _carouselPlaces = [];
   bool _isSearching = false;
-
-  // Biến dữ liệu cho carousel
-  List<Place> _carouselPlaces = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _allPlaces = mockPlacesData.map((data) => Place.fromJson(data)).toList();
-    _filteredPlaces = _allPlaces;
-    _carouselPlaces = _allPlaces.take(5).toList(); // Lấy 5 địa điểm đầu tiên
+    _fetchData();
     _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final spots = await SpotRepository().fetchSpots();
+      setState(() {
+        _allSpots = spots;
+        _filteredPlaces = spots;
+        _carouselPlaces = spots.take(5).toList();
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Lỗi tải dữ liệu: $e';
+      });
+    }
   }
 
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase().trim();
     setState(() {
       if (query.isEmpty) {
-        _filteredPlaces = _allPlaces;
+        _filteredPlaces = _allSpots;
         _isSearching = false;
       } else {
-        _filteredPlaces = _allPlaces.where((place) {
-          final placeName = place.name.toLowerCase();
-          final districtName = place.district.name.toLowerCase();
-          final provinceName = place.district.province.name.toLowerCase();
-          // Tìm kiếm nâng cao
-          return placeName.contains(query) ||
-              districtName.contains(query) ||
-              provinceName.contains(query) ||
-              '${place.name} ${districtName}'.contains(query) ||
-              '${place.name} ${provinceName}'.contains(query) ||
-              '$districtName ${provinceName}'.contains(query) ||
-              '${place.name} $districtName $provinceName'.contains(query);
+        _filteredPlaces = _allSpots.where((place) {
+          final name = place.name.toLowerCase();
+          final district = place.districtName.toLowerCase();
+          final province = place.provinceName.toLowerCase();
+          return name.contains(query) ||
+              district.contains(query) ||
+              province.contains(query) ||
+              '$name $district $province'.contains(query);
         }).toList();
         _isSearching = true;
       }
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _filteredPlaces = _allSpots;
+      _isSearching = false;
     });
   }
 
@@ -63,15 +84,6 @@ class _HomePageState extends State<HomePage> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _filteredPlaces = _allPlaces;
-      _isSearching = false;
-    });
   }
 
   @override
@@ -83,7 +95,6 @@ class _HomePageState extends State<HomePage> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
-            // Overlay mờ khi tìm kiếm
             if (_isSearching && _searchController.text.isNotEmpty)
               Positioned.fill(
                 child: AnimatedOpacity(
@@ -98,21 +109,17 @@ class _HomePageState extends State<HomePage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Carousel Banner ---
                 Stack(
                   children: [
                     if (_carouselPlaces.isNotEmpty)
-                    // SỬA LỖI: Gọi đúng tên widget CustomCarousel
                       CustomCarousel(
                         height: 220,
                         itemCount: _carouselPlaces.length,
                         itemBuilder: (context, index) {
                           final place = _carouselPlaces[index];
-                          // Gọi hàm helper để xây dựng UI cho item
                           return buildCarouselItem(context, place);
                         },
                       ),
-                    // Icon Menu
                     SafeArea(
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16, top: 8),
@@ -141,13 +148,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-
-                // --- Thanh tìm kiếm và kết quả ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Column(
                     children: [
-                      // Thanh tìm kiếm
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -174,14 +178,9 @@ class _HomePageState extends State<HomePage> {
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                           ),
-                          onTap: () {
-                            setState(() {
-                              _isSearching = true;
-                            });
-                          },
+                          onTap: () => setState(() => _isSearching = true),
                         ),
                       ),
-                      // Danh sách kết quả tìm kiếm
                       if (_isSearching && _searchController.text.isNotEmpty && _filteredPlaces.isNotEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 8),
@@ -205,12 +204,12 @@ class _HomePageState extends State<HomePage> {
                               return ListTile(
                                 leading: const Icon(Icons.location_on, color: AppColors.primary),
                                 title: Text(place.name),
-                                subtitle: Text('${place.district.name}, ${place.district.province.name}'),
+                                subtitle: Text('${place.districtName}, ${place.provinceName}'),
                                 onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => PlaceDetailPage(place: place),
+                                      builder: (context) => PlaceDetailPage(spot: place), // Fixed: Changed `spot` to `place`
                                     ),
                                   ).then((_) => _clearSearch());
                                 },
@@ -218,7 +217,6 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-                      // Thông báo không tìm thấy
                       if (_isSearching && _searchController.text.isNotEmpty && _filteredPlaces.isEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 8),
@@ -235,12 +233,10 @@ class _HomePageState extends State<HomePage> {
                             ],
                           ),
                           child: const Center(child: Text('Không tìm thấy địa điểm phù hợp.')),
-                        )
+                        ),
                     ],
                   ),
                 ),
-
-                // --- Tiêu đề danh sách ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
@@ -255,10 +251,12 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-
-                // --- Lưới hiển thị các địa điểm ---
                 Expanded(
-                  child: _filteredPlaces.isEmpty && !_isSearching
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorMessage != null
+                      ? Center(child: Text(_errorMessage!))
+                      : _filteredPlaces.isEmpty && !_isSearching
                       ? const Center(child: Text('Không có địa điểm nào để hiển thị.'))
                       : GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -276,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PlaceDetailPage(place: place),
+                              builder: (context) => PlaceDetailPage(spot: place),
                             ),
                           );
                         },
@@ -301,7 +299,9 @@ class _HomePageState extends State<HomePage> {
                                   child: Hero(
                                     tag: 'place-image-${place.id}',
                                     child: NetworkImageWithFallback(
-                                      imageUrl: place.imageUrl,
+                                      imageUrl: place.imageUrl.isNotEmpty
+                                          ? place.imageUrl
+                                          : 'https://via.placeholder.com/150', // Fallback image
                                       width: double.infinity,
                                       fit: BoxFit.cover,
                                     ),
@@ -329,7 +329,7 @@ class _HomePageState extends State<HomePage> {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        '${place.district.name}, ${place.district.province.name}',
+                                        '${place.districtName}, ${place.provinceName}',
                                         style: const TextStyle(
                                           color: AppColors.white,
                                           fontSize: 12,
@@ -357,28 +357,30 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Hàm trợ giúp để xây dựng UI cho một item trong carousel.
-  Widget buildCarouselItem(BuildContext context, Place place) {
+  Widget buildCarouselItem(BuildContext context, SpotModel spot) {
     return Stack(
       fit: StackFit.expand,
       children: [
         NetworkImageWithFallback(
-          imageUrl: place.imageUrl,
+          imageUrl: spot.imageUrl.isNotEmpty
+              ? spot.imageUrl
+              : 'https://via.placeholder.com/300', // Fallback image for carousel
           fit: BoxFit.cover,
           width: double.infinity,
         ),
         Container(
           decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withValues(blue: 0.2, green: 0.2, red: 0.2),
-                  Colors.transparent,
-                  Colors.black.withValues(blue: 0.2, green: 0.2, red: 0.2),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: const [0.0, 0.5, 1.0],
-              )),
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withOpacity(0.5),
+                Colors.transparent,
+                Colors.black.withOpacity(0.5),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
         ),
         Positioned.fill(
           child: Column(
@@ -387,7 +389,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
-                  place.name,
+                  spot.name,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
@@ -403,7 +405,7 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => PlaceDetailPage(place: place),
+                      builder: (context) => PlaceDetailPage(spot: spot),
                     ),
                   );
                 },

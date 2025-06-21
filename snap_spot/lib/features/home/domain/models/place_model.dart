@@ -148,7 +148,7 @@ class Agency {
   );
 }
 
-class Place {
+class Spot {
   final String id;
   final String name;
   final String description;
@@ -169,7 +169,7 @@ class Place {
   final String? parentCompanyImageUrl;
   final double? parentCompanyRating;
 
-  Place({
+  Spot({
     required this.id,
     required this.name,
     required this.description,
@@ -188,7 +188,7 @@ class Place {
     this.parentCompanyRating,
   });
 
-  factory Place.fromJson(Map<String, dynamic> json) => Place(
+  factory Spot.fromJson(Map<String, dynamic> json) => Spot(
     id: json['id'] as String? ?? '',
     name: json['name'] as String? ?? 'N/A',
     description: json['description'] as String? ?? 'Không có mô tả.',

@@ -1,7 +1,11 @@
+
 import 'package:flutter/material.dart';
+import 'config/env.dart';
 import 'features/home/presentation/pages/home_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Env.load();
   runApp(MyApp());
 }
 
