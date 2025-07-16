@@ -1,5 +1,3 @@
-// lib/core/network/api_client.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -9,6 +7,8 @@ class ApiClient {
   final http.Client _client;
 
   ApiClient([http.Client? client]) : _client = client ?? http.Client();
+
+  http.Client get client => _client;
 
   Future<dynamic> get(String url, {Map<String, String>? headers}) async {
     try {

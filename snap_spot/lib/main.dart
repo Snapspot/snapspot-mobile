@@ -1,12 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'config/env.dart';
-import 'features/home/presentation/pages/home_page.dart';
+import 'features/auth/presentation/pages/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Env.load();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -20,7 +19,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: const LoginPage(),
     );
   }
 }

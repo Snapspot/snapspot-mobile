@@ -1,22 +1,48 @@
 // place_detail_page.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import '../../../../core/themes/app_colors.dart';
-import '../../../community/data/mock_post_data.dart';
-import '../../../community/domain/models/post_model.dart';
 import '../../../community/presentation/pages/community_page.dart';
+import '../../data/agency_repository.dart';
 import '../../domain/models/spot_model.dart';
 import '../../../../shared/widgets/network_image_with_fallback.dart';
 import '../../../../shared/widgets/service_chip.dart';
 import 'agency_info_page.dart';
+import '../../domain/models/agency_model.dart';
 
-class PlaceDetailPage extends StatelessWidget {
+class PlaceDetailPage extends StatefulWidget {
   final SpotModel spot;
+
 
   const PlaceDetailPage({super.key, required this.spot});
 
   @override
+  State<PlaceDetailPage> createState() => _PlaceDetailPageState();
+}
+
+class _PlaceDetailPageState extends State<PlaceDetailPage> {
+  late Future<List<AgencyModel>> _agenciesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _agenciesFuture = fetchAgencies();
+  }
+
+  final _agencyRepository = AgencyRepository();
+
+  Future<List<AgencyModel>> fetchAgencies() async {
+    return _agencyRepository.fetchAgenciesBySpotId(widget.spot.id);
+  }
+
+
+  @override
   Widget build(BuildContext context) {
+    final spot = widget.spot;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -102,7 +128,6 @@ class PlaceDetailPage extends StatelessWidget {
                   style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 20),
-
                 _buildSectionTitle('Vị Trí'),
                 const SizedBox(height: 8),
                 Row(
@@ -134,67 +159,104 @@ class PlaceDetailPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-
                 _buildSectionTitle('Các Công Ty Dịch Vụ'),
                 const SizedBox(height: 12),
+                FutureBuilder<List<AgencyModel>>(
+                  future: _agenciesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Text('Lỗi khi tải dữ liệu: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text('Không có công ty dịch vụ nào.');
+                    }
 
-                spot.agencies.isEmpty
-                    ? Container(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-                  decoration: BoxDecoration(
-                      color: AppColors.white, borderRadius: BorderRadius.circular(12)),
-                  child: const Center(
-                    child: Text(
-                      "Không có công ty dịch vụ nào được liên kết tại địa điểm này.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 15,
-                          fontStyle: FontStyle.italic),
-                    ),
-                  ),
-                )
-                    : Column(
-                  children: spot.agencies.map((agency) {
-                    return Card(
-                      elevation: 1.5,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(agency.avatarUrl),
-                        ),
-                        title: Text(
-                          agency.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle:
-                        Text('${agency.fullname} - ${agency.phoneNumber}'),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.star, color: Colors.orange, size: 18),
-                            Text(agency.rating.toStringAsFixed(1),
-                                style: const TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AgencyInfoPage(agency: agency),
+                    final agencies = snapshot.data!;
+
+                    return Column(
+                      children: agencies.map((agency) {
+                        return Card(
+                          elevation: 2,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage: NetworkImage(agency.avatarUrl),
+                                      radius: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            agency.name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            agency.fullname,
+                                            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                                          ),
+                                          Text(
+                                            agency.phoneNumber,
+                                            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 4,
+                                            children: agency.services.map((s) => ServiceChip(name: s.name, color: s.color)).toList(),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      children: [
+                                        const Icon(Icons.star, color: Colors.orange, size: 20),
+                                        Text(agency.rating.toStringAsFixed(1)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => AgencyInfoPage(agency: agency),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.reviews),
+                                      label: const Text('Xem đánh giá'),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
+                  },
                 ),
-
                 const SizedBox(height: 24),
-
                 _buildSectionTitle('Bài đăng liên quan'),
                 const SizedBox(height: 12),
                 Container(
@@ -277,10 +339,9 @@ class PlaceDetailPage extends StatelessWidget {
 
   Future<void> _openGoogleMaps(BuildContext context) async {
     try {
-      final String fullAddress = '${spot.name}, ${spot.address}, ${spot.districtName}, ${spot.provinceName}';
+      final String fullAddress = '${widget.spot.name}, ${widget.spot.address}, ${widget.spot.districtName}, ${widget.spot.provinceName}';
       final String encodedAddress = Uri.encodeComponent(fullAddress);
-      final Uri googleMapsUri = Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$encodedAddress');
+      final Uri googleMapsUri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedAddress');
 
       if (await canLaunchUrl(googleMapsUri)) {
         await launchUrl(googleMapsUri, mode: LaunchMode.externalApplication);
