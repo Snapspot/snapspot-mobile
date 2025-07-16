@@ -5,6 +5,9 @@ class User {
   final String birthdate;
   final String avatarUrl;
   final String backgroundUrl;
+  final String bio;
+  final List<String> posts;
+  final List<String> savedPosts;
 
   User({
     required this.name,
@@ -13,16 +16,22 @@ class User {
     required this.birthdate,
     required this.avatarUrl,
     required this.backgroundUrl,
+    required this.bio,
+    required this.posts,
+    required this.savedPosts,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      name: json['name'] ?? 'Ẩn danh',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      birthdate: json['birthdate'] ?? '',
-      avatarUrl: json['avatarUrl'] ?? 'https://via.placeholder.com/150',
-      backgroundUrl: json['backgroundUrl'] ?? '',
+      name: json['name'],
+      email: json['email'],
+      phone: json['phone'],
+      birthdate: json['birthdate'],
+      avatarUrl: json['avatarUrl'],
+      backgroundUrl: json['backgroundUrl'],
+      bio: json['bio'],
+      posts: List<String>.from(json['posts']),
+      savedPosts: List<String>.from(json['savedPosts']),
     );
   }
 }

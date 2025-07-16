@@ -1,5 +1,7 @@
 // lib/features/home/domain/models/spot_model.dart
 
+import 'agency_model.dart';
+
 class SpotModel {
   final String id;
   final String name;
@@ -11,6 +13,8 @@ class SpotModel {
   final String provinceName;
   final String imageUrl;
   final String address;
+  final List<AgencyModel> agencies;
+
 
   SpotModel({
     required this.id,
@@ -22,7 +26,9 @@ class SpotModel {
     required this.districtName,
     required this.provinceName,
     required this.imageUrl,
-    required this.address
+    required this.address,
+    required this.agencies,
+
   });
 
   factory SpotModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +43,9 @@ class SpotModel {
       provinceName: json['provinceName'] as String? ?? '',
       imageUrl: json['imageUrl'] as String? ?? '',
       address: json['address'] as String? ?? '',
+      agencies: (json['agencies'] as List<dynamic>? ?? [])
+          .map((e) => AgencyModel.fromJson(e))
+          .toList(),
     );
   }
 }

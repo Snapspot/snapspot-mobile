@@ -1,80 +1,72 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.snap_spot">
 
-    <!-- Quyền truy cập internet -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Quyền kiểm tra trạng thái mạng -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Quyền hệ thống -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- Đối với Android 12 trở lên -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:label="snap_spot"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:requestLegacyExternalStorage="true">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
-            <!-- Theme hiển thị khi ứng dụng khởi động -->
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
 
-            <!-- Activity chính khi app chạy -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Flutter engine plugin -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 
-    <!-- Cấu hình queries cho url_launcher và Google Maps -->
+    <!-- Hỗ trợ mở bản đồ và trình duyệt -->
     <queries>
-        <!-- Cho phép query ACTION_PROCESS_TEXT -->
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
         </intent>
-
-        <!-- Cho phép mở links HTTPS (trình duyệt web) -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
-
-        <!-- Cho phép mở links HTTP -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="http" />
         </intent>
-
-        <!-- Cho phép mở Google Maps với geo scheme -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="geo" />
         </intent>
-
-        <!-- Cho phép mở Google Maps navigation -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="google.navigation" />
         </intent>
-
-        <!-- Package query cho Google Maps app -->
         <package android:name="com.google.android.apps.maps" />
-
-        <!-- Package query cho Chrome browser -->
         <package android:name="com.android.chrome" />
     </queries>
 

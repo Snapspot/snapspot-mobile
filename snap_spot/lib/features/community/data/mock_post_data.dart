@@ -244,5 +244,92 @@ const mockPostData = [
         "likes": 7
       }
     ]
+  },
+  {
+    "id": 12,
+    "userName": "Ngô Thanh Vân",
+    "userAvatarUrl": "https://i.pravatar.cc/150?img=15",
+    "location": "Hồ Con Rùa",
+    "timestamp": "2025-06-18T18:45:00Z",
+    "content": "Hồ Con Rùa chiều nay đẹp lạ kỳ. Gió nhẹ, nhạc du dương từ quán trà sữa ven hồ, quá hợp để chill. 🌆🧋",
+    "imageUrls": [
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua.jpg",
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua-1.jpg",
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua-3.jpg",
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua-4.jpg"
+    ],
+    "likes": 1245,
+    "commentList": [
+      {
+        "userName": "Bảo Anh",
+        "userAvatarUrl": "https://i.pravatar.cc/150?img=26",
+        "content": "View này chill thật, mai phải ra làm bộ ảnh mới được!",
+        "timestamp": "2025-06-18T19:00:00Z",
+        "likes": 8
+      },
+      {
+        "userName": "Trúc Nhân",
+        "userAvatarUrl": "https://i.pravatar.cc/150?img=27",
+        "content": "Ủa hồi chiều tui cũng ở đó mà không thấy bà ta?",
+        "timestamp": "2025-06-18T19:05:00Z",
+        "likes": 3
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "userName": "Trần Mỹ Ngọc",
+    "userAvatarUrl": "https://i.pravatar.cc/150?img=18",
+    "location": "Hồ Con Rùa",
+    "timestamp": "2025-06-20T17:20:00Z",
+    "content": "Hôm nay trời nhiều mây nhưng hồ vẫn đẹp nhẹ nhàng. Lúc ngồi đọc sách mà nghe tiếng nước róc rách bên dưới, cảm giác thư thái ghê. 📖☁️",
+    "imageUrls": [
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua-2.jpg"
+    ],
+    "likes": 860,
+    "commentList": [
+      {
+        "userName": "Đặng Trần Tùng",
+        "userAvatarUrl": "https://i.pravatar.cc/150?img=33",
+        "content": "Đọc gì đó chị? Recommend cuốn nào đi!",
+        "timestamp": "2025-06-20T18:00:00Z",
+        "likes": 2
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "userName": "Phạm Quốc Anh",
+    "userAvatarUrl": "https://i.pravatar.cc/150?img=23",
+    "location": "Hồ Con Rùa",
+    "timestamp": "2025-06-19T19:10:00Z",
+    "content": "Ghé ngang Hồ Con Rùa buổi tối, đèn vàng phản chiếu mặt nước như tranh vẽ. Chụp vài kiểu ảnh xong là full bộ hình nghệ luôn. 📸✨",
+    "imageUrls": [
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua-6.jpg",
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua-7.jpg"
+    ],
+    "likes": 1142,
+    "commentList": [
+      {
+        "userName": "Lê Hải Nam",
+        "userAvatarUrl": "https://i.pravatar.cc/150?img=39",
+        "content": "Cảnh đêm nhìn mộng mị thiệt sự á!",
+        "timestamp": "2025-06-19T19:20:00Z",
+        "likes": 4
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "userName": "Nguyễn Trúc Lam",
+    "userAvatarUrl": "https://i.pravatar.cc/150?img=29",
+    "location": "Hồ Con Rùa",
+    "timestamp": "2025-06-21T08:15:00Z",
+    "content": "Sáng chạy bộ ngang Hồ Con Rùa, dừng lại hít một hơi thật sâu. Thành phố vẫn ồn ào, nhưng ở đây lại có chút yên bình rất riêng. 🏃‍♀️🌳",
+    "imageUrls": [
+      "https://saigonreview.vn/wp-content/uploads/2023/08/ho-con-rua-5.jpg"
+    ],
+    "likes": 675,
+    "commentList": []
   }
 ];

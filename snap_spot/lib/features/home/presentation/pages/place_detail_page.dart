@@ -1,7 +1,10 @@
-// lib/features/home/presentation/pages/place_detail_page.dart
+// place_detail_page.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../community/data/mock_post_data.dart';
+import '../../../community/domain/models/post_model.dart';
+import '../../../community/presentation/pages/community_page.dart';
 import '../../domain/models/spot_model.dart';
 import '../../../../shared/widgets/network_image_with_fallback.dart';
 import '../../../../shared/widgets/service_chip.dart';
@@ -22,7 +25,7 @@ class PlaceDetailPage extends StatelessWidget {
             expandedHeight: 280.0,
             pinned: true,
             stretch: true,
-            backgroundColor: AppColors.primary,
+            backgroundColor: AppColors.background,
             iconTheme: const IconThemeData(color: AppColors.white),
             flexibleSpace: FlexibleSpaceBar(
               stretchModes: const [StretchMode.zoomBackground, StretchMode.fadeTitle],
@@ -135,18 +138,132 @@ class PlaceDetailPage extends StatelessWidget {
                 _buildSectionTitle('Các Công Ty Dịch Vụ'),
                 const SizedBox(height: 12),
 
-                Container(
+                spot.agencies.isEmpty
+                    ? Container(
                   padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
                   decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12)
-                  ),
+                      color: AppColors.white, borderRadius: BorderRadius.circular(12)),
                   child: const Center(
                     child: Text(
                       "Không có công ty dịch vụ nào được liên kết tại địa điểm này.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 15, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 15,
+                          fontStyle: FontStyle.italic),
                     ),
+                  ),
+                )
+                    : Column(
+                  children: spot.agencies.map((agency) {
+                    return Card(
+                      elevation: 1.5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(agency.avatarUrl),
+                        ),
+                        title: Text(
+                          agency.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle:
+                        Text('${agency.fullname} - ${agency.phoneNumber}'),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.star, color: Colors.orange, size: 18),
+                            Text(agency.rating.toStringAsFixed(1),
+                                style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AgencyInfoPage(agency: agency),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 24),
+
+                _buildSectionTitle('Bài đăng liên quan'),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.groups_2, color: AppColors.green),
+                          SizedBox(width: 8),
+                          Text(
+                            'Cộng đồng SnapSpot',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Khám phá những khoảnh khắc chân thực từ cộng đồng tại địa điểm này.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CommunityPage(spotName: spot.name),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            elevation: 2,
+                            backgroundColor: AppColors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            "Xem các bài đăng",
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -160,7 +277,7 @@ class PlaceDetailPage extends StatelessWidget {
 
   Future<void> _openGoogleMaps(BuildContext context) async {
     try {
-      final String fullAddress = '${spot.address}, ${spot.districtName}, ${spot.provinceName}';
+      final String fullAddress = '${spot.name}, ${spot.address}, ${spot.districtName}, ${spot.provinceName}';
       final String encodedAddress = Uri.encodeComponent(fullAddress);
       final Uri googleMapsUri = Uri.parse(
           'https://www.google.com/maps/search/?api=1&query=$encodedAddress');

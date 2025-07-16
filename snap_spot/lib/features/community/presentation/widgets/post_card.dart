@@ -17,59 +17,84 @@ class PostCard extends StatelessWidget {
     final aspectRatio = 4 / 3;
     final dynamicHeight = screenWidth / aspectRatio;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      shape: const RoundedRectangleBorder(),
-      elevation: 2,
-      color: AppColors.background,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // User Info
           ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               backgroundImage: NetworkImage(post.userAvatarUrl),
             ),
             title: Text(
               post.userName,
-              style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.green),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text("📍 ${post.location}", style: TextStyle(color: AppColors.green)),
-            trailing: const Icon(Icons.more_horiz),
+            subtitle: Text("📍 ${post.location}"),
+            trailing: IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: () {},
+            ),
           ),
 
-          // Post Text
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: ExpandableText(text: post.content,style: TextStyle(color: AppColors.green)),
-          ),
-
-          // Carousel Images
-          if (post.imageUrls.isNotEmpty)
-            CustomCarousel(
-              itemCount: post.imageUrls.length,
-              height: dynamicHeight,
-              itemBuilder: (_, index) => NetworkImageWithFallback(
-                imageUrl: post.imageUrls[index],
-                fit: BoxFit.contain,
-                width: double.infinity,
+          // Post Content
+          if (post.content.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: ExpandableText(
+                text: post.content,
+                style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
               ),
             ),
 
-          // Actions
+          // Carousel Images
+          if (post.imageUrls.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: CustomCarousel(
+                itemCount: post.imageUrls.length,
+                height: dynamicHeight,
+                itemBuilder: (_, index) => ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: NetworkImageWithFallback(
+                    imageUrl: post.imageUrls[index],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+
+          // Like & Comment Buttons
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Likes
                 Row(
                   children: [
-                    const Icon(Icons.favorite, color: Colors.redAccent),
-                    const SizedBox(width: 4),
+                    const Icon(Icons.favorite_border, color: Colors.redAccent),
+                    const SizedBox(width: 6),
                     Text(
                       "${post.likes ~/ 1000}.${(post.likes % 1000) ~/ 100}k",
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -85,11 +110,11 @@ class PostCard extends StatelessWidget {
                   },
                   child: Row(
                     children: [
-                      Icon(Icons.chat_bubble_outline, color: AppColors.gray),
-                      const SizedBox(width: 4),
+                      const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary),
+                      const SizedBox(width: 6),
                       Text(
                         "${post.comments.length}",
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
