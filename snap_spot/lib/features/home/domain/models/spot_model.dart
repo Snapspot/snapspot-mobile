@@ -13,6 +13,7 @@ class SpotModel {
   final String provinceName;
   final String imageUrl;
   final String address;
+  final double distance;
   final List<AgencyModel> agencies;
 
 
@@ -27,6 +28,7 @@ class SpotModel {
     required this.provinceName,
     required this.imageUrl,
     required this.address,
+    required this.distance,
     required this.agencies,
 
   });
@@ -43,6 +45,7 @@ class SpotModel {
       provinceName: json['provinceName'] as String? ?? '',
       imageUrl: json['imageUrl'] as String? ?? '',
       address: json['address'] as String? ?? '',
+      distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
       agencies: (json['agencies'] as List<dynamic>? ?? [])
           .map((e) => AgencyModel.fromJson(e))
           .toList(),

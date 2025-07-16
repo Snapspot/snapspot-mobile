@@ -7,6 +7,8 @@ import '../../../../shared/widgets/network_image_with_fallback.dart';
 import '../../data/spot_repository.dart';
 import '../../domain/models/spot_model.dart';
 import 'place_detail_page.dart';
+import 'package:geolocator/geolocator.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -33,7 +35,29 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _fetchData() async {
     try {
-      final spots = await SpotRepository().fetchSpots();
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception('Dịch vụ định vị chưa được bật.');
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception('Người dùng từ chối quyền truy cập vị trí.');
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('Người dùng đã từ chối quyền truy cập vĩnh viễn.');
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      final spots = await SpotRepository().fetchSpotsByLocation(
+          position.latitude, position.longitude);
+
       setState(() {
         _allSpots = spots;
         _filteredPlaces = spots;
@@ -44,10 +68,11 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Lỗi tải dữ liệu: $e';
+        _errorMessage = 'Lỗi: ${e.toString()}';
       });
     }
   }
+
 
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase().trim();
@@ -321,6 +346,7 @@ class _HomePageState extends State<HomePage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 child: Row(
@@ -339,6 +365,19 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                   ],
+                                ),
+                              ),
+
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child:Text('${(place.distance / 1).toStringAsFixed(2)} km',
+                                  style: const TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               const SizedBox(height: 10),

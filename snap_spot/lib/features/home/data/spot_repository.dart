@@ -23,4 +23,21 @@ class SpotRepository {
 
     return data.map((e) => SpotModel.fromJson(e)).toList();
   }
+
+  Future<List<SpotModel>> fetchSpotsByLocation(double latitude, double longitude) async {
+    final url = '${Env.baseUrl}/spots/distance?latitude=$latitude&longitude=$longitude';
+
+    final response = await _apiClient.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    final data = response['data'];
+    if (data is! List) {
+      throw ParsingException('Expected a list in "data" field');
+    }
+
+    return data.map((e) => SpotModel.fromJson(e)).toList();
+  }
+
 }
