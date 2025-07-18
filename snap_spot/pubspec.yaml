@@ -38,6 +38,7 @@ dependencies:
   image_picker: ^1.1.0
   geolocator: ^14.0.2
   shared_preferences: ^2.5.3
+  provider: ^6.1.2
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -63,6 +64,7 @@ flutter:
   assets:
     - .env
     - assets/images/snapspot_square.jpg
+    - assets/images/logo-03.png
   fonts:
     - family: Roboto
       fonts:

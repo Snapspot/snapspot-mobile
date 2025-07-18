@@ -32,4 +32,6 @@ class AgencyRepository {
 
     return data.map((e) => AgencyModel.fromJson(e)).toList();
   }
+
+
 }

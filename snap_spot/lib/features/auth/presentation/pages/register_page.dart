@@ -74,7 +74,7 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               children: [
                 const SizedBox(height: 24),
-                Image.asset("assets/images/snapspot_square.jpg", height: 150), // logo
+                Image.asset("assets/images/logo-03.png", height: 150),
 
                 const SizedBox(height: 32),
                 const Text(

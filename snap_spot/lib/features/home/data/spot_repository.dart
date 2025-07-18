@@ -40,4 +40,20 @@ class SpotRepository {
     return data.map((e) => SpotModel.fromJson(e)).toList();
   }
 
+  Future<SpotModel> fetchSpotById(String spotId) async {
+    final url = '${Env.baseUrl}/spots/$spotId';
+
+    final response = await _apiClient.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    final data = response['data'];
+    if (data == null || data is! Map<String, dynamic>) {
+      throw ParsingException('Expected a JSON object in "data" field');
+    }
+
+    return SpotModel.fromJson(data);
+  }
+
 }

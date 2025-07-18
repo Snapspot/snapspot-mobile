@@ -92,10 +92,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
         children: [
           ListTile(
             leading: CircleAvatar(
-              backgroundImage: NetworkImage(currentUser.avatarUrl),
+              backgroundImage: NetworkImage("https://avatars.githubusercontent.com/u/169139992?v=4"),
             ),
             title: Text(
-              currentUser.name,
+              currentUser.fullName,
               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
             subtitle: TextField(

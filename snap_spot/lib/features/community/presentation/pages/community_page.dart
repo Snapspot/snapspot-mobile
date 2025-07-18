@@ -92,7 +92,7 @@ class _CommunityPageState extends State<CommunityPage> {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundImage: NetworkImage(currentUser.avatarUrl),
+                    backgroundImage: NetworkImage("https://avatars.githubusercontent.com/u/169139992?v=4"),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
