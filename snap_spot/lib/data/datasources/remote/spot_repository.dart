@@ -1,9 +1,8 @@
-// lib/features/home/data/spot_repository.dart
 
 import '../../../config/env.dart';
 import '../../../core/error/network_exceptions.dart';
 import '../../../core/network/api_client.dart';
-import '../domain/models/spot_model.dart';
+import '../../../features/home/domain/models/spot_model.dart';
 
 class SpotRepository {
   final ApiClient _apiClient;

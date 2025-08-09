@@ -37,4 +37,11 @@ class AppColors {
   static const Color buttonBlue = Color(0xFF007BFF); // Standard blue (same as original)
   static const Color buttonRed = Color(0xFFDC3545); // Standard red for destructive actions
   static const Color buttonGreen = Color(0xFF28A745); // Standard green for positive actions
+
+
+  // Màu cho các trạng thái
+  static const Color success = Color(0xFF28A745); // Green for success
+  static const Color error = Color(0xFFDC3545); // Red for errors
+  static const Color warning = Color(0xFFFFC107); // Yellow for warnings
+
 }

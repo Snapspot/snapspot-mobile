@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:snap_spot/data/datasources/remote/spot_repository.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../../shared/widgets/custom_carousel.dart';
 import '../../../../shared/widgets/custom_drawer.dart';
 import '../../../../shared/widgets/network_image_with_fallback.dart';
-import '../../data/spot_repository.dart';
 import '../../domain/models/spot_model.dart';
 import 'place_detail_page.dart';
 
@@ -418,10 +418,22 @@ class _HomePageState extends State<HomePage> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            '${spot.distance.toStringAsFixed(2)} km',
-            style: const TextStyle(color: AppColors.white, fontSize: 12, fontStyle: FontStyle.italic),
+          child: Row(
+            children: [
+              const Icon(Icons.directions_walk, size: 14, color: AppColors.white),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  '${spot.distance.toStringAsFixed(2)} km',
+                  style: const TextStyle(color: AppColors.white, fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+              ),
+            ],
           ),
+          // child: Text(
+          //   '${spot.distance.toStringAsFixed(2)} km',
+          //   style: const TextStyle(color: AppColors.white, fontSize: 12, fontStyle: FontStyle.italic),
+          // ),
         ),
         const SizedBox(height: 10),
       ],

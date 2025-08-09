@@ -54,12 +54,12 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      userId: json['userId'],
-      fullName: json['fullName'],
-      email: json['email'],
-      phoneNumber: json['phoneNumber'],
-      dob: DateTime.parse(json['dob']),
-      roleName: json['roleName'],
+      userId: json['userId'] as String? ?? '', // Mặc định chuỗi rỗng nếu null
+      fullName: json['fullName'] as String? ?? '', // Mặc định chuỗi rỗng nếu null
+      email: json['email'] as String? ?? '', // Mặc định chuỗi rỗng nếu null
+      phoneNumber: json['phoneNumber'] as String? ?? '', // Mặc định chuỗi rỗng nếu null
+      dob: json['dob'] != null ? DateTime.parse(json['dob'] as String) : DateTime.now(), // Mặc định là ngày hiện tại nếu null
+      roleName: json['roleName'] as String? ?? '', // Mặc định chuỗi rỗng nếu null
     );
   }
 

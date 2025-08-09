@@ -24,13 +24,21 @@ class ApiClient {
         return decoded;
       } else {
         final msg = _extractErrorMessage(response.body) ?? 'Unknown server error';
+        // Ném ServerException trực tiếp, không wrap
         throw ServerException(response.statusCode, msg);
       }
+    } on ServerException {
+      // Ném lại ServerException mà không wrap
+      rethrow;
+    } on ParsingException {
+      // Ném lại ParsingException mà không wrap
+      rethrow;
     } on http.ClientException catch (e) {
       throw NetworkException('Network error: ${e.message}');
     } on FormatException catch (e) {
       throw ParsingException('Format error: ${e.message}');
     } catch (e) {
+      // Chỉ wrap những exception không mong muốn khác
       throw Exception('Unexpected error: $e');
     }
   }

@@ -31,7 +31,13 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),
+       home: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          return authProvider.isAuthenticated
+              ? const HomePage()
+              : const LoginPage();
+        },
+      ),
     );
   }
 }

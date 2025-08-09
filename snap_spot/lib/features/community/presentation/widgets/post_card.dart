@@ -93,7 +93,9 @@ class PostCard extends StatelessWidget {
                     const Icon(Icons.favorite_border, color: Colors.redAccent),
                     const SizedBox(width: 6),
                     Text(
-                      "${post.likes ~/ 1000}.${(post.likes % 1000) ~/ 100}k",
+                      post.likes >= 1000
+                          ? "${(post.likes / 1000).toStringAsFixed(1)}k"
+                          : "${post.likes}",
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
@@ -105,7 +107,7 @@ class PostCard extends StatelessWidget {
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (_) => CommentModal(comments: post.comments),
+                      builder: (_) => CommentModal(comments: const []), // Không có danh sách comment
                     );
                   },
                   child: Row(
@@ -113,7 +115,7 @@ class PostCard extends StatelessWidget {
                       const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
                       Text(
-                        "${post.comments.length}",
+                        "${post.comments}",
                         style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ],

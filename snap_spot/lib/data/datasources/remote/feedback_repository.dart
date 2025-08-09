@@ -5,8 +5,8 @@ import 'dart:convert';
 import '../../../config/env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/error/network_exceptions.dart';
-import '../../auth/presentation/providers/auth_provider.dart' hide NetworkException;
-import '../domain/models/feedback_model.dart';
+import '../../../features/auth/presentation/providers/auth_provider.dart' hide NetworkException;
+import '../../../features/home/domain/models/feedback_model.dart';
 
 class FeedbackRepository {
   final ApiClient _apiClient;
@@ -110,6 +110,25 @@ class FeedbackRepository {
 
       // Cho các exception khác
       throw NetworkException('Unexpected error: ${e.toString()}');
+    }
+  }
+  Future<void> createFeedback({
+    required String agencyId,
+    required String content,
+    required int rating,
+  }) async {
+    final response = await _authProvider.makeAuthenticatedRequest(
+      method: 'POST',
+      endpoint: '/feedback',
+      body: {
+        'content': content,
+        'rating': rating,
+        'agencyId': agencyId,
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to create feedback: ${response.body}');
     }
   }
 }

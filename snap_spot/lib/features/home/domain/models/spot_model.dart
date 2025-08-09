@@ -36,7 +36,7 @@ class SpotModel {
   factory SpotModel.fromJson(Map<String, dynamic> json) {
     return SpotModel(
       id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? 'N/A',
+      name: json['name'] as String? ?? '',
       description: json['description'] as String? ?? 'Không có mô tả.',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
