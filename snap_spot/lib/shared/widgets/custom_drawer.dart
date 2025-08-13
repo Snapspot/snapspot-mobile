@@ -79,7 +79,7 @@ class CustomDrawer extends StatelessWidget {
               children: [
                 ClipOval(
                   child: NetworkImageWithFallback(
-                    imageUrl: 'https://avatars.githubusercontent.com/u/169139992?v=4',
+                    imageUrl: user?.avatarUrl ?? '',
                     width: 60,
                     height: 60,
                     fit: BoxFit.cover,

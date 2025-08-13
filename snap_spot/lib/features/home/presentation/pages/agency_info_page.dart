@@ -28,7 +28,7 @@ class _AgencyInfoPageState extends State<AgencyInfoPage> {
   FeedbackRepository? _feedbackRepository;
   Future<List<FeedbackModel>>? _feedbackFuture;
   final _feedbackController = TextEditingController();
-  double _selectedRating = 5.0;
+  double _selectedRating = 0.0;
 
   @override
   void initState() {

@@ -60,6 +60,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildUnauthenticatedView(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = Provider.of<AuthProvider>(context).user;
     return SafeArea(
       child: Column(
         children: [
@@ -103,9 +105,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginPage()
-                          )),
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()
+                        )),
 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -127,6 +129,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -194,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   backgroundColor: Colors.white,
                   child: ClipOval(
                     child: NetworkImageWithFallback(
-                      imageUrl: "https://avatars.githubusercontent.com/u/169139992?v=4",
+                      imageUrl: user?.avatarUrl ?? '',
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
