@@ -7,6 +7,7 @@ import '../../../../shared/widgets/expandable_text.dart';
 import '../../../../shared/widgets/custom_carousel.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/post_model.dart';
+import '../../domain/models/comment_model.dart';
 import 'comment_modal.dart';
 
 class PostCard extends StatefulWidget {
@@ -25,13 +26,17 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   bool _isLiking = false;
+  bool _isLoadingComments = false;
   late int _currentLikes;
+  late int _currentCommentsCount;
   late bool _isLiked;
+  List<Comment> _cachedComments = [];
 
   @override
   void initState() {
     super.initState();
     _currentLikes = widget.post.likes;
+    _currentCommentsCount = widget.post.comments;
     _isLiked = false; // Có thể cải thiện bằng cách check từ server
   }
 
@@ -153,12 +158,67 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
+  Future<void> _handleCommentTap() async {
+    // Pre-load comments nếu chưa có
+    if (_cachedComments.isEmpty && !_isLoadingComments) {
+      await _preloadComments();
+    }
+
+    if (!mounted) return;
+
+    // Show modal với comments đã load (hoặc empty list)
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CommentModal(
+        postId: widget.post.id,
+        initialComments: _cachedComments,
+      ),
+    );
+
+    // Nếu có comment mới được thêm, reload comments
+    if (result == true) {
+      _preloadComments();
+    }
+  }
+
+  Future<void> _preloadComments() async {
+    if (_isLoadingComments) return;
+
+    setState(() {
+      _isLoadingComments = true;
+    });
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final repository = CommunityRepository(accessToken: authProvider.accessToken);
+
+      final comments = await repository.fetchCommentsByPostId(widget.post.id);
+
+      if (mounted) {
+        setState(() {
+          _cachedComments = comments;
+          _currentCommentsCount = comments.length;
+          _isLoadingComments = false;
+        });
+      }
+    } catch (e) {
+      print('Error preloading comments: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingComments = false;
+        });
+      }
+    }
+  }
+
   void _showLoginRequiredDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Yêu cầu đăng nhập'),
-        content: const Text('Bạn cần đăng nhập để thích bài đăng này.'),
+        content: const Text('Bạn cần đăng nhập để thực hiện hành động này.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -296,33 +356,135 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
+
                 // Comments
                 GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => CommentModal(comments: const []),
-                    );
-                  },
+                  onTap: _handleCommentTap,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Row(
                       children: [
-                        const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary),
+                        if (_isLoadingComments)
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.textSecondary,
+                              ),
+                            ),
+                          )
+                        else
+                          const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary),
                         const SizedBox(width: 6),
                         Text(
-                          "${widget.post.comments}",
+                          _currentCommentsCount >= 1000
+                              ? "${(_currentCommentsCount / 1000).toStringAsFixed(1)}k"
+                              : "$_currentCommentsCount",
                           style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
                   ),
                 ),
+
+                // Share button (optional)
+                // GestureDetector(
+                //   onTap: () {
+                //     // TODO: Implement share functionality
+                //     ScaffoldMessenger.of(context).showSnackBar(
+                //       const SnackBar(
+                //         content: Text('Tính năng chia sẻ sẽ được cập nhật sau'),
+                //         backgroundColor: Colors.orange,
+                //         behavior: SnackBarBehavior.floating,
+                //       ),
+                //     );
+                //   },
+                //   child: Container(
+                //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                //     child: const Row(
+                //       children: [
+                //         Icon(Icons.share_outlined, color: AppColors.textSecondary),
+                //         SizedBox(width: 6),
+                //         Text(
+                //           'Chia sẻ',
+                //           style: TextStyle(color: AppColors.textSecondary),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
+
+          // Preview comments (hiển thị 1-2 comment đầu tiên nếu có)
+          if (_cachedComments.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+
+                  // Hiển thị tối đa 2 comment đầu
+                  ...(_cachedComments.take(2).map((comment) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundImage: comment.userAvatarUrl.isNotEmpty
+                              ? NetworkImage(comment.userAvatarUrl)
+                              : null,
+                          child: comment.userAvatarUrl.isEmpty
+                              ? const Icon(Icons.person, size: 12)
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(color: Colors.black87, fontSize: 13),
+                              children: [
+                                TextSpan(
+                                  text: '${comment.userName} ',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                TextSpan(text: comment.content),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )).toList()),
+
+                  // Nút "Xem thêm bình luận" nếu có nhiều hơn 2 comment
+                  if (_cachedComments.length > 2)
+                    GestureDetector(
+                      onTap: _handleCommentTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          'Xem thêm ${_cachedComments.length - 2} bình luận',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
         ],
       ),
     );

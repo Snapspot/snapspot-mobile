@@ -42,6 +42,7 @@ class User {
   final String phoneNumber;
   final DateTime dob;
   final String roleName;
+  final String? avatarUrl;
 
   User({
     required this.userId,
@@ -50,6 +51,7 @@ class User {
     required this.phoneNumber,
     required this.dob,
     required this.roleName,
+    required this.avatarUrl,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@ class User {
       phoneNumber: json['phoneNumber'] as String? ?? '', // Mặc định chuỗi rỗng nếu null
       dob: json['dob'] != null ? DateTime.parse(json['dob'] as String) : DateTime.now(), // Mặc định là ngày hiện tại nếu null
       roleName: json['roleName'] as String? ?? '', // Mặc định chuỗi rỗng nếu null
+      avatarUrl: json['avatarUrl'] as String?, // Có thể là null nếu không có
     );
   }
 
@@ -71,6 +74,7 @@ class User {
       'phoneNumber': phoneNumber,
       'dob': dob.toIso8601String(),
       'roleName': roleName,
+      'avatarUrl': avatarUrl ?? '',
     };
   }
 }

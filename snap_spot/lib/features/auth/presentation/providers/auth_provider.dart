@@ -462,6 +462,6 @@
     // Additional getters
     bool get hasValidSession => _accessToken != null && _user != null;
     String get userDisplayName => _user?.fullName ?? 'User';
-    // String get userAvatarUrl => _user?.avatarUrl ?? '';
+    String get userAvatarUrl => _user?.avatarUrl ?? '';
     String get userEmail => _user?.email ?? '';
   }
