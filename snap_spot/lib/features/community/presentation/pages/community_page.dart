@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:snap_spot/features/community/domain/models/post_model.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../data/datasources/remote/community_repository.dart';
 import '../../../../shared/widgets/custom_drawer.dart';
 import '../../../profile/data/user_mock.dart';
 import '../../../profile/domain/model/user_model.dart';
@@ -23,6 +24,7 @@ class CommunityPage extends StatefulWidget {
 class _CommunityPageState extends State<CommunityPage> {
   late Future<List<Post>> _postsFuture;
   late User currentUser;
+  final _communityRepository = CommunityRepository();
 
   @override
   void initState() {
@@ -33,19 +35,7 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Future<List<Post>> fetchPosts() async {
     if (widget.spotId == null) return [];
-    final url = Uri.parse('http://14.225.217.24:8080/api/posts/${widget.spotId}');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final jsonBody = json.decode(response.body);
-      if (jsonBody['success'] == true && jsonBody['data'] != null) {
-        final List data = jsonBody['data'];
-        if (data.isEmpty) return [];
-        return data.map((e) => Post.fromApi(e)).toList();
-      }
-      return [];
-    } else {
-      throw Exception('Lỗi khi tải bài đăng');
-    }
+    return _communityRepository.fetchPostsBySpotId(widget.spotId!);
   }
 
   Future<void> _handleRefresh() async {
@@ -179,4 +169,4 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 }
-              
+
