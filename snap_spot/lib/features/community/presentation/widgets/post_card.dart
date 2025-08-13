@@ -37,11 +37,30 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     _currentLikes = widget.post.likes;
     _currentCommentsCount = widget.post.comments;
-    _isLiked = false; // Có thể cải thiện bằng cách check từ server
+    _isLiked = false; // Khởi tạo mặc định
+    _loadLikeStatus(); // Gọi async để kiểm tra trạng thái like
+  }
+
+  Future<void> _loadLikeStatus() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) return;
+
+    try {
+      final repository = widget.communityRepository ??
+          CommunityRepository(accessToken: authProvider.accessToken);
+      final isLiked = await repository.checkLikeStatus(widget.post.id);
+      if (mounted) {
+        setState(() {
+          _isLiked = isLiked;
+        });
+      }
+    } catch (e) {
+      print('Error loading like status: $e');
+      // Không hiển thị lỗi, giữ _isLiked = false
+    }
   }
 
   Future<void> _handleLike() async {
-    // Kiểm tra đăng nhập
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (!authProvider.isAuthenticated) {
       _showLoginRequiredDialog();
@@ -50,13 +69,11 @@ class _PostCardState extends State<PostCard> {
 
     if (_isLiking) return;
 
-    // Lưu trạng thái hiện tại để rollback nếu lỗi
     final previousLikes = _currentLikes;
     final previousLiked = _isLiked;
 
     setState(() {
       _isLiking = true;
-      // Optimistic update - cập nhật UI trước khi gọi API
       if (_isLiked) {
         _currentLikes--;
       } else {
@@ -66,15 +83,8 @@ class _PostCardState extends State<PostCard> {
     });
 
     try {
-      // Sử dụng repository được truyền vào hoặc tạo mới với token
-      CommunityRepository repository;
-      if (widget.communityRepository != null) {
-        repository = widget.communityRepository!;
-      } else {
-        repository = CommunityRepository(accessToken: authProvider.accessToken);
-      }
-
-      // Sử dụng method toggle
+      final repository = widget.communityRepository ??
+          CommunityRepository(accessToken: authProvider.accessToken);
       final success = await repository.toggleLikePost(widget.post.id, previousLiked);
 
       if (success && mounted) {
@@ -97,7 +107,6 @@ class _PostCardState extends State<PostCard> {
           ),
         );
       } else {
-        // API thất bại - rollback UI
         if (mounted) {
           setState(() {
             _currentLikes = previousLikes;
@@ -106,22 +115,17 @@ class _PostCardState extends State<PostCard> {
         }
       }
     } catch (e) {
-      // Lỗi xảy ra - rollback UI
       if (mounted) {
         setState(() {
           _currentLikes = previousLikes;
           _isLiked = previousLiked;
         });
 
-        print('Like error: $e'); // Debug log
+        print('Like error: $e');
 
         String errorMessage = e.toString();
-
-        // Xử lý lỗi cụ thể
         if (errorMessage.contains('Token hết hạn') || errorMessage.contains('401')) {
           errorMessage = 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại';
-          // Có thể logout user tại đây
-          // authProvider.logout();
         } else if (errorMessage.contains('Vui lòng đăng nhập')) {
           _showLoginRequiredDialog();
           return;
@@ -159,14 +163,12 @@ class _PostCardState extends State<PostCard> {
   }
 
   Future<void> _handleCommentTap() async {
-    // Pre-load comments nếu chưa có
     if (_cachedComments.isEmpty && !_isLoadingComments) {
       await _preloadComments();
     }
 
     if (!mounted) return;
 
-    // Show modal với comments đã load (hoặc empty list)
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -177,9 +179,10 @@ class _PostCardState extends State<PostCard> {
       ),
     );
 
-    // Nếu có comment mới được thêm, reload comments
+    print('Comment modal closed with result: $result');
     if (result == true) {
-      _preloadComments();
+      print('Reloading comments due to new comment');
+      await _preloadComments();
     }
   }
 
@@ -193,7 +196,6 @@ class _PostCardState extends State<PostCard> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final repository = CommunityRepository(accessToken: authProvider.accessToken);
-
       final comments = await repository.fetchCommentsByPostId(widget.post.id);
 
       if (mounted) {
@@ -227,7 +229,6 @@ class _PostCardState extends State<PostCard> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Navigate to login page
               // Navigator.pushNamed(context, '/login');
             },
             child: const Text('Đăng nhập'),
@@ -259,7 +260,6 @@ class _PostCardState extends State<PostCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // User Info
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
@@ -281,8 +281,6 @@ class _PostCardState extends State<PostCard> {
               },
             ),
           ),
-
-          // Post Content
           if (widget.post.content.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -291,8 +289,6 @@ class _PostCardState extends State<PostCard> {
                 style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
               ),
             ),
-
-          // Carousel Images
           if (widget.post.imageUrls.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -309,17 +305,13 @@ class _PostCardState extends State<PostCard> {
                 ),
               ),
             ),
-
           const SizedBox(height: 8),
           const Divider(height: 1),
-
-          // Like & Comment Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Likes
                 GestureDetector(
                   onTap: _handleLike,
                   child: Container(
@@ -356,8 +348,6 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
-
-                // Comments
                 GestureDetector(
                   onTap: _handleCommentTap,
                   child: Container(
@@ -388,38 +378,9 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
-
-                // Share button (optional)
-                // GestureDetector(
-                //   onTap: () {
-                //     // TODO: Implement share functionality
-                //     ScaffoldMessenger.of(context).showSnackBar(
-                //       const SnackBar(
-                //         content: Text('Tính năng chia sẻ sẽ được cập nhật sau'),
-                //         backgroundColor: Colors.orange,
-                //         behavior: SnackBarBehavior.floating,
-                //       ),
-                //     );
-                //   },
-                //   child: Container(
-                //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                //     child: const Row(
-                //       children: [
-                //         Icon(Icons.share_outlined, color: AppColors.textSecondary),
-                //         SizedBox(width: 6),
-                //         Text(
-                //           'Chia sẻ',
-                //           style: TextStyle(color: AppColors.textSecondary),
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           ),
-
-          // Preview comments (hiển thị 1-2 comment đầu tiên nếu có)
           if (_cachedComments.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(top: 8),
@@ -429,8 +390,6 @@ class _PostCardState extends State<PostCard> {
                 children: [
                   const Divider(height: 1),
                   const SizedBox(height: 8),
-
-                  // Hiển thị tối đa 2 comment đầu
                   ...(_cachedComments.take(2).map((comment) => Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: Row(
@@ -462,9 +421,7 @@ class _PostCardState extends State<PostCard> {
                         ),
                       ],
                     ),
-                  )).toList()),
-
-                  // Nút "Xem thêm bình luận" nếu có nhiều hơn 2 comment
+                  ))).toList(),
                   if (_cachedComments.length > 2)
                     GestureDetector(
                       onTap: _handleCommentTap,
@@ -480,7 +437,6 @@ class _PostCardState extends State<PostCard> {
                         ),
                       ),
                     ),
-
                   const SizedBox(height: 8),
                 ],
               ),

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import '../../../config/env.dart';
 import '../../../core/error/network_exceptions.dart';
 import '../../../features/community/domain/models/comment_model.dart';
@@ -10,21 +9,15 @@ class CommunityRepository {
   final String baseUrl = Env.baseUrl;
   final String? accessToken;
 
-  // Constructor nhận access token
   CommunityRepository({this.accessToken});
 
   Future<List<Post>> fetchPostsBySpotId(String spotId) async {
     try {
       final url = Uri.parse('$baseUrl/posts/$spotId');
-
-      // Thêm headers với token nếu có
       final headers = <String, String>{
         'Content-Type': 'application/json',
+        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
       };
-
-      if (accessToken != null) {
-        headers['Authorization'] = 'Bearer $accessToken';
-      }
 
       final response = await http.get(url, headers: headers);
 
@@ -46,42 +39,33 @@ class CommunityRepository {
 
   Future<bool> likePost(String postId) async {
     try {
-      // Kiểm tra token trước khi gọi API
       if (accessToken == null) {
         throw NetworkException('Vui lòng đăng nhập để thích bài đăng');
       }
 
       final url = Uri.parse('$baseUrl/posts/$postId/like');
-
       final headers = <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
       };
 
       print('Calling like API: $url');
-      print('With token: ${accessToken?.substring(0, 20)}...');
-
       final response = await http.post(url, headers: headers);
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Like response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonBody = json.decode(response.body);
         if (jsonBody['success'] == true) {
           return true;
         }
-      }
-
-      if (response.statusCode == 400) {
+      } else if (response.statusCode == 400) {
         final jsonBody = json.decode(response.body);
         if (jsonBody['message']?.toString().toLowerCase().contains('already liked') ?? false) {
           return true; // Treat as success
         }
       }
 
-
-      // Xử lý các lỗi cụ thể
       if (response.statusCode == 401) {
         throw NetworkException('Token hết hạn, vui lòng đăng nhập lại');
       } else if (response.statusCode == 404) {
@@ -91,31 +75,26 @@ class CommunityRepository {
       }
     } catch (e) {
       print('Error in likePost: $e');
-      rethrow; // Ném lại exception để UI có thể xử lý
+      rethrow;
     }
   }
 
   Future<bool> unlikePost(String postId) async {
     try {
-      // Kiểm tra token trước khi gọi API
       if (accessToken == null) {
         throw NetworkException('Vui lòng đăng nhập để bỏ thích bài đăng');
       }
 
       final url = Uri.parse('$baseUrl/posts/$postId/unlike');
-
       final headers = <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
       };
 
       print('Calling unlike API: $url');
-      print('With token: ${accessToken?.substring(0, 20)}...');
-
       final response = await http.post(url, headers: headers);
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Unlike response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonBody = json.decode(response.body);
@@ -124,7 +103,6 @@ class CommunityRepository {
         }
       }
 
-      // Xử lý các lỗi cụ thể
       if (response.statusCode == 401) {
         throw NetworkException('Token hết hạn, vui lòng đăng nhập lại');
       } else if (response.statusCode == 404) {
@@ -134,11 +112,10 @@ class CommunityRepository {
       }
     } catch (e) {
       print('Error in unlikePost: $e');
-      rethrow; // Ném lại exception để UI có thể xử lý
+      rethrow;
     }
   }
 
-  // Method tổng hợp để toggle like/unlike
   Future<bool> toggleLikePost(String postId, bool isCurrentlyLiked) async {
     if (isCurrentlyLiked) {
       return await unlikePost(postId);
@@ -146,25 +123,61 @@ class CommunityRepository {
       return await likePost(postId);
     }
   }
-  // Fetch comments for a post
+
+  Future<bool> checkLikeStatus(String postId) async {
+    try {
+      if (accessToken == null) {
+        return false; // Chưa đăng nhập, mặc định chưa like
+      }
+
+      final url = Uri.parse('$baseUrl/posts/$postId/like');
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      };
+
+      print('Checking like status for post: $postId');
+      final response = await http.post(url, headers: headers);
+
+      print('Check like status response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Like thành công => post chưa được like, rollback bằng unlike
+        final unlikeResponse = await http.post(
+          Uri.parse('$baseUrl/posts/$postId/unlike'),
+          headers: headers,
+        );
+        print('Rollback unlike response: ${unlikeResponse.statusCode} - ${unlikeResponse.body}');
+        return false; // Chưa like ban đầu
+      } else if (response.statusCode == 400) {
+        final jsonBody = json.decode(response.body);
+        if (jsonBody['message']?.toString().toLowerCase().contains('already liked') ?? false) {
+          return true; // Đã like
+        }
+        throw NetworkException('Lỗi khi kiểm tra trạng thái like: ${response.body}');
+      } else if (response.statusCode == 401) {
+        throw NetworkException('Token hết hạn, vui lòng đăng nhập lại');
+      } else {
+        throw NetworkException('Lỗi server (${response.statusCode}): ${response.body}');
+      }
+    } catch (e) {
+      print('Error in checkLikeStatus: $e');
+      return false; // Fallback: chưa like nếu lỗi
+    }
+  }
+
   Future<List<Comment>> fetchCommentsByPostId(String postId) async {
     try {
       final url = Uri.parse('$baseUrl/posts/$postId/comments');
-
-      // Thêm headers với token nếu có
       final headers = <String, String>{
         'Content-Type': 'application/json',
+        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
       };
 
-      if (accessToken != null) {
-        headers['Authorization'] = 'Bearer $accessToken';
-      }
-
+      print('Fetching comments for post: $postId');
       final response = await http.get(url, headers: headers);
 
-      print('Fetching comments for post: $postId');
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Comments response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonBody = json.decode(response.body);
@@ -174,7 +187,6 @@ class CommunityRepository {
         }
         return [];
       } else if (response.statusCode == 404) {
-        // No comments found - return empty list
         return [];
       } else {
         throw NetworkException('HTTP ${response.statusCode}: ${response.body}');
@@ -185,39 +197,28 @@ class CommunityRepository {
     }
   }
 
-  // Post a new comment
   Future<Comment?> postComment(String postId, String content) async {
     try {
-      // Kiểm tra token trước khi gọi API
       if (accessToken == null) {
         throw NetworkException('Vui lòng đăng nhập để bình luận');
       }
 
-      if (content
-          .trim()
-          .isEmpty) {
+      if (content.trim().isEmpty) {
         throw NetworkException('Nội dung bình luận không được để trống');
       }
 
       final url = Uri.parse('$baseUrl/posts/$postId/comments');
-
       final headers = <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
       };
-
-      final body = json.encode({
-        'content': content.trim(),
-      });
+      final body = json.encode({'content': content.trim()});
 
       print('Posting comment to: $url');
       print('Comment content: $content');
-      print('With token: ${accessToken?.substring(0, 20)}...');
-
       final response = await http.post(url, headers: headers, body: body);
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Post comment response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonBody = json.decode(response.body);
@@ -226,14 +227,12 @@ class CommunityRepository {
         }
       }
 
-      // Xử lý các lỗi cụ thể
       if (response.statusCode == 401) {
         throw NetworkException('Token hết hạn, vui lòng đăng nhập lại');
       } else if (response.statusCode == 404) {
         throw NetworkException('Bài đăng không tồn tại');
       } else {
-        throw NetworkException(
-            'Lỗi server (${response.statusCode}): ${response.body}');
+        throw NetworkException('Lỗi server (${response.statusCode}): ${response.body}');
       }
     } catch (e) {
       print('Error posting comment: $e');

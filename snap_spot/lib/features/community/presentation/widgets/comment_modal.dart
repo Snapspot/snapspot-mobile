@@ -27,17 +27,15 @@ class _CommentModalState extends State<CommentModal> {
   bool _isLoading = true;
   bool _isPosting = false;
   String? _errorMessage;
+  bool _hasNewComment = false; // Thêm biến để track comment mới
 
   @override
   void initState() {
     super.initState();
     _comments = List.from(widget.initialComments);
-
-    // Initialize repository with auth token
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     _repository = CommunityRepository(accessToken: authProvider.accessToken);
 
-    // Fetch comments if no initial comments provided
     if (_comments.isEmpty) {
       _fetchComments();
     } else {
@@ -81,7 +79,6 @@ class _CommentModalState extends State<CommentModal> {
     final content = _commentController.text.trim();
     if (content.isEmpty) return;
 
-    // Check authentication
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (!authProvider.isAuthenticated) {
       _showLoginRequiredDialog();
@@ -96,14 +93,15 @@ class _CommentModalState extends State<CommentModal> {
       final newComment = await _repository.postComment(widget.postId, content);
 
       if (newComment != null && mounted) {
+        print('New comment posted, setting _hasNewComment = true');
         setState(() {
-          _comments.insert(0, newComment); // Add to top
+          _comments.insert(0, newComment);
           _isPosting = false;
+          _hasNewComment = true; // Set true khi có comment mới
         });
 
         _commentController.clear();
 
-        // Scroll to top to show new comment
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
             0,
@@ -112,7 +110,6 @@ class _CommentModalState extends State<CommentModal> {
           );
         }
 
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Đã đăng bình luận'),
@@ -162,7 +159,6 @@ class _CommentModalState extends State<CommentModal> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Navigate to login page
               // Navigator.pushNamed(context, '/login');
             },
             child: const Text('Đăng nhập'),
@@ -174,243 +170,248 @@ class _CommentModalState extends State<CommentModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      padding: const EdgeInsets.only(top: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: Column(
-        children: [
-          // Handle bar
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(10),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, _hasNewComment);
+        return false;
+      },
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        padding: const EdgeInsets.only(top: 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          ),
-
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  'Bình luận',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 16),
+                  child: Text(
+                    'Bình luận',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _isLoading ? null : _fetchComments,
-              ),
-            ],
-          ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: _isLoading ? null : _fetchComments,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context, _hasNewComment),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _fetchComments,
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
+              )
+                  : _comments.isEmpty
+                  ? const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Chưa có bình luận nào',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Hãy là người đầu tiên bình luận!',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              )
+                  : RefreshIndicator(
+                onRefresh: _fetchComments,
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _comments.length,
+                  itemBuilder: (_, index) {
+                    final comment = _comments[index];
+                    final timeAgo = _formatTimeAgo(comment.timestamp);
 
-          const Divider(height: 1),
-
-          // Comments list
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _fetchComments,
-                    child: const Text('Thử lại'),
-                  ),
-                ],
-              ),
-            )
-                : _comments.isEmpty
-                ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'Chưa có bình luận nào',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Hãy là người đầu tiên bình luận!',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-                : RefreshIndicator(
-              onRefresh: _fetchComments,
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _comments.length,
-                itemBuilder: (_, index) {
-                  final comment = _comments[index];
-                  final timeAgo = _formatTimeAgo(comment.timestamp);
-
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundImage: comment.userAvatarUrl.isNotEmpty
-                              ? NetworkImage(comment.userAvatarUrl)
-                              : null,
-                          child: comment.userAvatarUrl.isEmpty
-                              ? const Icon(Icons.person)
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    comment.userName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage: comment.userAvatarUrl.isNotEmpty
+                                ? NetworkImage(comment.userAvatarUrl)
+                                : null,
+                            child: comment.userAvatarUrl.isEmpty
+                                ? const Icon(Icons.person)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      comment.userName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                  ),
-                                  if (comment.spotName != null) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.shade100,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        comment.spotName!,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.blue.shade800,
+                                    if (comment.spotName != null) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade100,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          comment.spotName!,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.blue.shade800,
+                                          ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ],
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                comment.content,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                timeAgo,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  comment.content,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  timeAgo,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const Divider(height: 1),
+            SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Colors.grey[300]!)),
+                ),
+                child: Consumer<AuthProvider>(
+                  builder: (context, authProvider, child) {
+                    return Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundImage: authProvider.user?.avatarUrl?.isNotEmpty == true
+                              ? NetworkImage(authProvider.user!.avatarUrl!)
+                              : null,
+                          child: authProvider.user?.avatarUrl?.isNotEmpty != true
+                              ? const Icon(Icons.person, size: 16)
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _commentController,
+                            decoration: InputDecoration(
+                              hintText: authProvider.isAuthenticated
+                                  ? 'Viết bình luận...'
+                                  : 'Đăng nhập để bình luận...',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              isDense: true,
+                            ),
+                            enabled: authProvider.isAuthenticated && !_isPosting,
+                            maxLines: null,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => _postComment(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _isPosting
+                            ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                            : IconButton(
+                          icon: const Icon(Icons.send, color: Colors.blueAccent),
+                          onPressed: authProvider.isAuthenticated &&
+                              _commentController.text.trim().isNotEmpty &&
+                              !_isPosting
+                              ? _postComment
+                              : null,
                         ),
                       ],
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-
-          const Divider(height: 1),
-
-          // Comment input
-          SafeArea(
-            top: false,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Colors.grey[300]!)),
-              ),
-              child: Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
-                  return Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundImage: authProvider.user?.avatarUrl?.isNotEmpty == true
-                            ? NetworkImage(authProvider.user!.avatarUrl!)
-                            : null,
-                        child: authProvider.user?.avatarUrl?.isNotEmpty != true
-                            ? const Icon(Icons.person, size: 16)
-                            : null,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _commentController,
-                          decoration: InputDecoration(
-                            hintText: authProvider.isAuthenticated
-                                ? 'Viết bình luận...'
-                                : 'Đăng nhập để bình luận...',
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            isDense: true,
-                          ),
-                          enabled: authProvider.isAuthenticated && !_isPosting,
-                          maxLines: null,
-                          textInputAction: TextInputAction.send,
-                          onSubmitted: (_) => _postComment(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _isPosting
-                          ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                          : IconButton(
-                        icon: const Icon(Icons.send, color: Colors.blueAccent),
-                        onPressed: authProvider.isAuthenticated &&
-                            _commentController.text.trim().isNotEmpty &&
-                            !_isPosting
-                            ? _postComment
-                            : null,
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
